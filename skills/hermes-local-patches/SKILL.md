@@ -43,11 +43,13 @@ If origin/main moved since the rebase base, gate the rollout before touching the
 ## Testing
 
 - Measure a baseline at the new base with no patches; upstream ships failing tests. The patched run may only fail a subset of the baseline's failures. Gate on "no new failures", not "exit 0".
-- The test venv lives under `~/.hermes/installs/<hash>/test-environment/gen-*/venv/bin/python`. Find it and use it read-only. The runtime venv has no pytest.
+- The test venv is the newest match of `~/.hermes/installs/*/test-environment/gen-*/venv/bin/python`. Resolve the glob before dispatch. Several installs can match. Use the venv read-only. The runtime venv has no pytest.
 - Run pytest under `env -u HERMES_SINGLE_QUERY_SESSION`. The variable leaks into subprocess tests and breaks the delegate tool's test file.
 - Spell the invocation out in every delegate or one-shot harness brief. Run the tests with HERMES_SINGLE_QUERY_SESSION unset (prefix `env -u HERMES_SINGLE_QUERY_SESSION`), with the test venv python, and with the new and old test files in ONE pytest run:
 
       env -u HERMES_SINGLE_QUERY_SESSION <venv>/bin/python -m pytest tests/<new_test_file>.py tests/<old_test_file>.py
+
+  <new_test_file> is the patch's new test file; <old_test_file> is the pre-existing test file it extends or replaces. <venv> is the resolved test venv from the line above. If the run includes tests/tools/test_delegate.py, the run_agent-first rule below wins over this order: put the run_agent-importing file first and the rest after it.
 
   A split run once produced a wrong first conclusion ("live-tree run omitted my test file"), because delegate test failures depend on which files collect together.
 - In a linked worktree made from the live clone, tests that import `run_agent` fail at `tests/home_io_guard.py:160` (TEST BUG: file I/O against the REAL hermes home). The cause, not a patch defect: a linked worktree's `.git` file resolves into the live clone's gitdir, which sits outside the worktree's allowlist root. Job-local venv installs and fixtures also land under that gitdir. Two results follow. Gating on any FAIL set in a worktree is meaningless unless the clean base worktree shows the same set; compare always. And a worktree run where all tests pass is not proof for the live tree: the rollout reruns the targeted subset on the live install after applying, because the guard there can also trip on an isolated run of one file.

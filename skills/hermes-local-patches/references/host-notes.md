@@ -6,7 +6,7 @@ Recorded 2026-10-20 during the statusbar/resume restore on this host. Extends `p
 
 - ~/.hermes/hermes-agent is a git checkout. `hermes update` hard-resets it to upstream and wipes every local patch. On 2026-10-20 both symptoms appeared at once: the statusbar widget `quotabar.mjs` lost its segments, and resume of old sessions failed with `invalid_params (base_url: must be an http(s) URL without credentials, query or fragment)`.
 - Fix per chain: reapply the patches, restart the gateway and TUI (patched code loads only then), then run the review chain before pushing the follow-up dotfiles commit.
-- As of 2026-10-20 the patch set is 54 modified + 5 untracked files on upstream base `bd3cbe91a90097f9804f16ea5c1768f5cbaaf0b7`. combined.diff and review-request.md live in /home/marco/.hermes/cache/scratch/patch-review/ (scratch prunes after 7 idle days, so regenerate rather than rely on them).
+- As of 2026-10-20 the patch set is 54 modified + 5 untracked files on upstream base `bd3cbe91a90097f9804f16ea5c1768f5cbaaf0b7`. combined.diff and review-request.md live in ~/.hermes/cache/scratch/patch-review/ (scratch prunes after 7 idle days, so regenerate rather than rely on them).
 
 ## Combined diff
 
