@@ -17,7 +17,7 @@ Recorded 2026-10-20 during the statusbar/resume restore on this host. Extends `p
 - hermes-adversarial-review hard-codes `--provider openai-codex`. ChatGPT/Codex rejects kimi-k3: `The 'kimi-k3' model is not supported when using Codex with a ChatGPT account.`
 - Working route: model id `moonshotai/Kimi-K3` on the flatiron gateway, through custom provider flags `--provider custom --base-url https://inference.flatironinstitute.org/v1 --api-key <contents of ~/.config/fi-llm-token>`. `hermes-dispatch-route models` lists the exact IDs; `latest` has no kimi family.
 - The wrapper takes no provider flag, so route it through a scratch PATH shim named `hermes` that rewrites the Kimi argv. Keep the token out of argv (visible in `ps`): pass it by environment variable if the custom provider supports one; if not, accept the brief exposure and say so in the report.
-- Kimi reasoning effort should be max (the config's intended effort).
+- Kimi reasoning effort: high. Run max only when the user explicitly asks for it.
 
 ## The wrapper's request-dump gate
 
