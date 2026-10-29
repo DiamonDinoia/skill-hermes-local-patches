@@ -1,7 +1,6 @@
 # hermes-local-patches
 
-Rebase and roll out the local Hermes patches. The live install at `~/.hermes/hermes-agent`
-tracks upstream plus local patch files; the patch set is the source of truth.
+Keep local Hermes customizations alive across `hermes update`: config keys, a user plugin,
+a TUI widget, and one small core patch, all deployed from `~/dotfiles/hermes`.
 
-The skill lives at `skills/hermes-local-patches/`. It was imported verbatim from the
-installed copy at `~/.hermes/skills/local/hermes-local-patches/`.
+The skill lives at `skills/hermes-local-patches/`.

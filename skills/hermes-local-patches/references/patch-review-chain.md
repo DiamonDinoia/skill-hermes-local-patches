@@ -26,10 +26,10 @@ Every finding gets a read-only triage before any fix brief:
 
 - Verdict: REAL, FALSE or PARTLY, with file:line, one quoted line, and a probe for every REAL.
 - Origin: introduced by the last fix round (diff the pre-fix stack against the current one), pre-existing in the patches, or upstream. Read the upstream copy with `git show <upstream-sha>:<path>`.
-- After a rebase onto a new upstream base, check whether the rebase introduced a finding by comparing its cited line between the old and new dotfiles versions of the owning patch (`git -C ~/dotfiles show <old-sha>:<patch path>`). A text-identical line in both means the defect predates the rebase; report that, since it widens the blame window to every earlier review that passed it.
+- After a rebase onto a new upstream base, check whether the rebase introduced a finding by comparing its cited line between the old and new dotfiles versions of `local.patch` (`git -C ~/dotfiles show <old-sha>:<patch path>`). A text-identical line in both means the defect predates the rebase; report that, since it widens the blame window to every earlier review that passed it.
 - Overlap with earlier review findings, by finding number.
 - Impact class: A is a wrong result or data exposure in ordinary use; B needs an unusual setup; C is cosmetic or test-only.
-- Fix size in lines and the owning patch file.
+- Fix size in lines and the route (plugin, widget or `local.patch`).
 
 The fix round covers class A plus every finding the previous round introduced. The rest ships as documented limits.
 
@@ -40,8 +40,8 @@ Probes run read-only against the live tree and make no model calls. When the cod
 ## Fix round mechanics
 
 - Back up first: `git branch backup/<name> HEAD`.
-- Each fix is its own commit with subject `fixup! <patch file name>`. The patch file name equals the matching stack commit's subject. Commit with `--no-verify`.
+- Each fix is its own commit with subject `fixup! <subject of the commit it fixes>`. Commit with `--no-verify`.
 - Fold with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <upstream-base>`. The stack keeps its commit count, and no fixup subjects remain.
-- Regenerate each patch with `git diff <commit>^ <commit>` into a new patch directory. Report which files differ from the previous set.
-- Fit check in a detached worktree at the upstream base: `git apply --check` then `git apply` each patch in hook order. `diff -r --exclude=.git --exclude=node_modules --exclude=__pycache__` against the stack tree must show 0 mismatches. Remove the worktree after.
+- Regenerate `local.patch` from `git diff --binary --full-index <upstream-base> HEAD` (SKILL.md, step 6 of the rebase). Report which files differ from the previous patch.
+- Fit check: run the reapply hook on a fresh clone at the upstream base. `diff -r --exclude=.git --exclude=node_modules --exclude=__pycache__` against the stack tree must show 0 mismatches. Remove the clone after.
 - Rerun the gates at the new tip: the pytest subset with the delegate release test file first, the TUI battery, and the triage probes. The race probe must now deny the window case.
