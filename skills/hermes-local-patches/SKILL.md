@@ -38,7 +38,7 @@ In `_REASONING_CARRIER_ROUTES` (`agent/message_sanitization.py`) the first match
 
 ## The reapply hook
 
-`dotfiles/hermes/.local/bin/hermes-reapply-patches [CLONE]` runs after each successful `hermes update`, through the `~/.local/bin/hermes` wrapper. It applies `local.patch` with plain `git apply`, which is all-or-nothing, then runs `npm ci` and `npm run build` in `ui-tui`.
+`dotfiles/hermes/.local/bin/hermes-reapply-patches [CLONE]` runs after each successful `hermes update`, through the `~/.local/bin/hermes` wrapper. It applies `local.patch` with plain `git apply`, which is all-or-nothing, then runs `npm ci` and `npm run build` in `ui-tui`. The build uses the node and npm that Hermes manages under `~/.hermes/tools` (`find_node_executable`), never the copy on PATH: ui-tui requires node 26 or newer, and the workstation's nvm node is 24.
 
 - Exit 0: applied, or `skipped: local.patch (already applied)`.
 - Exit 1: the patch does not fit the new base, and the tree stays stock. Hermes still runs without the patch-carried features. The plugin still routes tiers, but core drops the tier `skills`. The widget refuses to load and names `local.patch` in the transcript. Rebase the patch (below), then rerun the hook. A failed ui-tui rebuild also exits 1.
@@ -48,7 +48,7 @@ The first line of `local.patch` is `Upstream base: <sha>`. `git apply` skips tex
 
 ## Running `hermes update` non-interactively
 
-Dry run first (`hermes update --dry-run`), then `hermes update --yes --keep-stash --no-gateway-restart`. Without `--yes` the command waits on a prompt with no error.
+Check first (`hermes update --check`; `--plan` shows the steps), then `hermes update --yes --keep-stash --no-gateway-restart`. Without `--yes` the command waits on a prompt with no error.
 
 The updater stashes local changes. Treat the stash as a read-only backup. Never pop it onto the new base. Rebuild from `local.patch`.
 
