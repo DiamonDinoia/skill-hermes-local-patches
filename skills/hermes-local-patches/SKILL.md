@@ -1,7 +1,7 @@
 ---
 name: hermes-local-patches
 description: "Use when changing a local Hermes customization, or when `hermes update` or the reapply hook fails."
-version: 2.0.0
+version: 2.0.1
 ---
 
 # Hermes local customizations
@@ -54,13 +54,22 @@ The updater stashes local changes. Treat the stash as a read-only backup. Never 
 
 ## After a successful update
 
-Make sure that the base moved (`git log --oneline -3`) and that the hook printed `applied:`. Then run, and judge each by stdout and exit status: a second `hermes update` (must print up to date), `hermes doctor`, one `hermes chat -q pong -Q` for each configured provider, `hermes mcp list --check`, `hermes skills list`, and the gateway status command. Then `hermes skills update`, because a code update does not refresh managed skills.
+Make sure that the base moved (`git log --oneline -3`) and that the hook printed `applied:`. Then run these checks. Judge each by stdout and exit status.
+
+- `hermes update --check`
+- `hermes doctor`
+- `hermes chat -q pong -Q`, one for each configured provider
+- `hermes mcp list`, then `hermes mcp test <name>` for each server
+- `hermes skills list`
+- `hermes gateway status`
+
+`--check` passes when it exits 0. `git log --oneline -1` must show the sha of the `[main @ <sha>]` line that `hermes update` printed. New upstream commits in its output are not a failure. `hermes doctor` exits 1 on advisory issues (database size, missing API keys, the user-managed `~/.local/bin/hermes`). Read its issue list. Only a new issue is a finding. Then `hermes skills update`, because a code update does not refresh managed skills.
 
 The config migration changes only `_config_version` in config.yaml. Diff config.yaml before and after. Report any other change. Never revert user settings.
 
 ## Rebase `local.patch` onto a new upstream commit
 
-1. Never edit the live clone. Use `git clone --shared ~/.hermes/hermes-agent <dir>` with `<dir>` outside `~/.hermes`. A linked worktree under `~/.hermes` trips `tests/home_io_guard.py` and gives false failures.
+1. Never edit the live clone. Use `git clone --shared --no-checkout ~/.hermes/hermes-agent <dir>` with `<dir>` outside `~/.hermes`. The live clone is a partial clone (`blob:none`). Before the checkout, copy three settings from the live clone: `remote.origin.url` (the GitHub URL), `remote.origin.promisor` and `remote.origin.partialclonefilter`. Without them, the checkout fails with `unable to read sha1 file`. A linked worktree under `~/.hermes` trips `tests/home_io_guard.py` and gives false failures.
 2. `git checkout <new-base>`, then `git apply --3way <local.patch>`. Resolve each conflict and keep both the upstream change and the purpose of the local change. Commit each logical change on its own (`git commit --no-verify`, because the clone has no node_modules for the eslint hook).
 3. Drop a change that upstream now covers. Move a change to an earlier route when the new base gives one.
 4. When a change touches the input of a generated file, rerun the generator (`scripts/gen_gateway_contracts.py`). Never edit a generated file by hand.
@@ -76,7 +85,7 @@ The config migration changes only `_config_version` in config.yaml. Diff config.
 - Test venv: the newest match of `~/.hermes/installs/*/test-environment/gen-*/venv/bin/python` (`ls -td`). Use it read-only.
 - Run pytest as `env -u HERMES_SINGLE_QUERY_SESSION <venv> -m pytest -p no:cacheprovider`. The variable leaks into subprocess tests and breaks the delegate tests.
 - Python files: every test file the patch adds or changes (`git diff --name-only --diff-filter=AM <base> -- 'tests/*.py'`), plus `tests/tools/test_delegation_backends.py`, `tests/tui_gateway/contracts/test_generated.py`, and the plugin's `tests/` directory.
-- TUI: link `node_modules` and `ui-tui/node_modules` from the live clone, then `env -u NODE_ENV npm run typecheck` and `npx vitest run` on the changed `src/__tests__` files plus `src/__tests__/useInputHandlers.test.ts`.
+- TUI: make `node_modules` and `node_modules/@hermes` real directories. Link each other entry of the live `node_modules`, and the live `@hermes/ink`. Point `@hermes/shared` at the clone's own `apps/shared`. A link to the live `node_modules` or `@hermes` resolves `@hermes/shared` to the stock contract. On 2026-11-05 typecheck then failed with `TS2339 tier on SubagentEventPayload`. Link `ui-tui/node_modules` from the live clone. Then run `env -u NODE_ENV npm run typecheck` and `npx vitest run` on the changed `src/__tests__` files plus `src/__tests__/useInputHandlers.test.ts`.
 - Widget: `node quotabar.mjs`.
 - Run every step under `nice -n 19 ionice -c 3` and `taskset` off the measurement cores.
 - Retention tests take the age from `SCRATCH_MAX_IDLE_HOURS`, never from a fixed number of hours.
